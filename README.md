@@ -6,12 +6,14 @@ Upload a short clip, get answers with timestamps and evidence frames, then descr
 
 ## Judges: start here — no setup
 
-1. **[Download START-HERE.html](https://github.com/4horizons/vidset/raw/refs/heads/main/START-HERE.html).** If GitHub shows code, use **Download raw file**.
-2. **Open with Safari, Chrome, or Edge**. A GitHub or Codex file preview may show source code; that is not the rendered demo. Keep the `.html` extension.
-   On Mac, you can instead download this repo with **Code → Download ZIP**, unzip it, and double-click **OPEN-DEMO-MAC.command** to open Safari automatically.
-3. Watch the automatic tour, or click **What we built** for a quick overview. If playback is paused, click **Play both**.
+### [⬇ Download the judge demo (.zip)](https://github.com/4horizons/vidset/releases/download/judge-demo/VIDSET-DEMO.zip)
 
-**That one file is the whole demo.** It includes both videos, the beach edit, evidence images, a saved OpenAI Q&A, and model explanations. It works offline with **no login, installation, API keys, server, or model calls**. You can share the file directly; recipients do not need GitHub access to open their copy.
+1. **Download** the ZIP above and **unzip** it.
+2. **Double-click `START-HERE.html`** to open the demo in your browser. If your computer opens an editor, right-click → **Open with → Safari, Chrome, or Edge**.
+3. Click **Watch the 60s demo**, or **What we built** for a quick overview.
+
+**No server. No install. No API keys.** The download includes the videos, beach edit, evidence frames, saved Q&A, and model explanations. It works completely offline. You do not need to clone this repository or sign in to GitHub.
+
 
 The beach edit and Q&A are real saved results. The model-choice step replays a real selection captured from the app after the beach edit. Prelint reviews model-routing policy; the live app applies it locally. A successful review is shown only when verified.
 
