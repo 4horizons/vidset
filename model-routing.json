@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "prefer_configured": true,
+  "roles": {
+    "vision": ["openai-vision", "fal-gemini", "gemini", "claude"],
+    "reasoning": ["openai-vision", "claude", "gemini", "fal-openai"],
+    "image": ["gpt-image"],
+    "source_video": ["higgsfield-seedance", "fal-seedance"],
+    "anchors": ["fal-kling"]
+  }
+}

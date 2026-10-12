@@ -135,4 +135,7 @@ def build_workflow(kind, config, video=None, edit=None):
                       skip_on=["reuse-replacement"]),
                 _step("stitch", "Assemble the video with original audio"),
             ]
-    return {"title": titles.get(kind, "Local workflow"), "steps": steps}
+    result = {"title": titles.get(kind, "Local workflow"), "steps": steps}
+    if config.get("_routing"):
+        result["routing"] = config["_routing"]
+    return result

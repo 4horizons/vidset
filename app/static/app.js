@@ -15,7 +15,7 @@
     conversations: new Map(), events: [], seenEvents: new Set(),
     selectionSequence: 0, toastTimer: null, dragDepth: 0,
     savedEdits: new Map(), sceneSaveTimer: null, storageNotice: false,
-    environments: [], presetSelection: null, gallerySignature: "", galleryPolling: false, previews: new Map(), previewRequests: new Set(),
+    environments: [], presetSelection: null, gallerySignature: "", galleryPolling: false, previews: new Map(), previewRequests: new Set(), routing: null, routingSignature: "",
   };
   const flow = { job: null, saved: false, view: null, open: new Map(), previous: new Map(), collapseTimers: new Map(), tick: null, signature: "" };
   const elements = {
@@ -156,6 +156,7 @@
 
   function setMode(mode) {
     state.mode = mode;
+    if (!state.busy) renderRouting();
     for (const option of ["ask", "edit"]) {
       const button = $(`#${option}-tab`);
       button.classList.toggle("active", option === mode);
@@ -1001,6 +1002,7 @@
   }
 
   function recordEvents(job, options = {}) {
+    renderRouting(job.routing || job.workflow?.routing, Boolean(job.routing || job.workflow?.routing));
     if (flow.job && flow.job.id !== job.id && flow.job.status !== "preparing") clearActivity();
     const newEvents = [];
     for (let index = 0; index < (job.events || []).length; index++) {
@@ -1035,6 +1037,39 @@
     }
     if (wasNearBottom) feed.scrollTop = feed.scrollHeight;
     updateWorkflow(job, options);
+  }
+
+  function renderRouting(payload, actual = false) {
+    const data = payload || state.routing;
+    if (!data) return;
+    if (state.video?.demo) { $("#routing-card").hidden = true; state.routingSignature = ""; return; }
+    const selectedRole = state.mode === "edit" ? (state.strategy === "anchors" ? "anchors" : "source_video") : "vision";
+    const decisions = actual ? data.decisions || [] : (data.decisions || []).filter(item => item.role === selectedRole);
+    const signature = JSON.stringify([decisions, data.review, actual]);
+    if (state.routingSignature === signature) return;
+    state.routingSignature = signature;
+    $("#routing-card").hidden = !decisions.length;
+    const review = $("#routing-review");
+    review.textContent = data.review?.label || "Prelint · pending";
+    review.classList.toggle("reviewed", data.review?.state === "reviewed");
+    review.title = data.review?.state === "reviewed" ? "Routing policy reviewed by Prelint. Selection runs locally." : "Local routing policy. Prelint review is not yet verified for this revision.";
+    $("#routing-decisions").replaceChildren(...decisions.map(decision => {
+      const row = el("div", "routing-decision");
+      const choice = el("div", "routing-choice");
+      choice.append(el("span", "routing-role", decision.title), el("strong", "", decision.chosen?.label || "Key needed"));
+      if (!actual) choice.append(el("span", "routing-next", "Next call"));
+      row.append(choice, el("p", "routing-reason", decision.reason));
+      const options = el("details", "routing-options");
+      options.append(el("summary", "", "Model options"));
+      const list = el("div", "routing-candidates");
+      for (const candidate of decision.candidates || []) {
+        const option = el("span", `routing-candidate ${candidate.status}`);
+        option.title = `${candidate.provider} / ${candidate.model} · ${candidate.reason}`;
+        option.append(el("span", "", candidate.label), el("small", "", candidate.reason));
+        list.append(option);
+      }
+      options.append(list); row.append(options); return row;
+    }));
   }
 
   function renderEvent(event) {
@@ -1302,6 +1337,8 @@
     $("#settings-error").hidden = true;
     try {
       state.config = await api("/api/config", { method: "POST", body: { keys, models } });
+      state.routing = await api("/api/routing");
+      renderRouting();
       $("#settings-dialog").close();
       for (const field of document.querySelectorAll("#key-fields input")) field.value = "";
       renderStrategy();
@@ -1372,6 +1409,7 @@
   $("#edit-strategy").addEventListener("change", (event) => {
     state.strategy = event.target.value === "anchors" ? "anchors" : "source_video";
     renderStrategy();
+    if (!state.busy) renderRouting();
     updateControls();
     scheduleSceneSave();
   });
@@ -1404,7 +1442,8 @@
 
   async function initialize() {
     setMode("ask");
-    const results = await Promise.allSettled([api("/api/config"), api("/api/videos")]);
+    const results = await Promise.allSettled([api("/api/config"), api("/api/videos"), api("/api/routing")]);
+    if (results[2].status === "fulfilled") state.routing = results[2].value;
     if (results[0].status === "fulfilled") { state.config = results[0].value; renderRoster(); }
     else toast(results[0].reason.message, true);
     if (results[1].status === "fulfilled") {
@@ -1417,6 +1456,7 @@
     } else toast(results[1].reason.message, true);
     if (state.config && !state.config.ffmpeg) toast("FFmpeg is unavailable. Install FFmpeg and restart the server to process videos.", true);
     updateControls();
+    renderRouting();
     await refreshEnvironments();
     setInterval(refreshEnvironments, 3000);
   }

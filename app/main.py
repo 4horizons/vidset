@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 from PIL import Image
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from . import demo, media, providers, source_editor, workflows, environments
+from . import demo, media, providers, source_editor, workflows, environments, routing
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -107,6 +107,11 @@ class ConfigRequest(BaseModel):
 @app.get("/api/config")
 async def get_config():
     return public_config()
+
+
+@app.get("/api/routing")
+async def get_routing():
+    return routing.apply(CONFIG, list(routing.TITLES))["_routing"]
 
 
 @app.post("/api/config")
@@ -202,6 +207,7 @@ def start_job(kind, worker, video_id=None, workflow=None):
     job_id = identifier()
     job = {"id": job_id, "type": kind, "status": "queued", "events": [], "result": None, "error": None,
            "workflow": copy.deepcopy(workflow or {"title": kind.title(), "steps": []}),
+           "routing": copy.deepcopy((workflow or {}).get("routing")),
            "created_at": datetime.now(timezone.utc).isoformat(), "started_at": None, "completed_at": None}
     JOBS[job_id] = job
     beginnings = {}
@@ -225,6 +231,10 @@ def start_job(kind, worker, video_id=None, workflow=None):
                 async with lock:
                     job["status"] = "running"
                     job["started_at"] = datetime.now(timezone.utc).isoformat()
+                    if job.get("routing"):
+                        choices = job["routing"]["decisions"]
+                        selected = [f"{item['chosen']['label']}: {item['reason']}" for item in choices if item.get("chosen")]
+                        await emit("model_selection", "local", "Routing policy", "; ".join(selected), "completed")
                     job["result"] = await worker(emit)
                     job["completed_at"] = datetime.now(timezone.utc).isoformat()
                     result_edit = job["result"].get("edit") if isinstance(job["result"], dict) else None
@@ -308,7 +318,7 @@ async def create_environment_previews(video_id: str, retry_failed: bool = False)
         return {"job_id": saved["job_id"]}
     if saved["status"] != "not_started" and not (retry_failed and saved["status"] == "failed"):
         return {"previews": saved, "reused": True}
-    config = copy.deepcopy(CONFIG)
+    config = routing.for_job(CONFIG, "environment_previews", video)
     if not config["keys"].get("openai"):
         raise HTTPException(400, "Add an OpenAI key in Models to create still previews.")
     folder = directory(video_id) / "environment-previews"
@@ -320,6 +330,8 @@ async def create_environment_previews(video_id: str, retry_failed: bool = False)
     workflow = {"title": "Create four still previews", "steps": [workflows._step("preview_frame", "Extract a source still")] + [
         workflows._step(f"edit_{item['id']}_anchor", f"Preview: {item['name']}", "openai", config["models"]["image_model"], skip_on=[f"reuse-preview-{item['id']}"])
         for item in environments.ENVIRONMENTS]}
+
+    workflow["routing"] = config.get("_routing")
 
     async def worker(emit):
         saved["status"] = "running"
@@ -467,7 +479,7 @@ async def analyze(video, config, emit):
 @app.post("/api/videos/{video_id}/analyze")
 async def analyze_endpoint(video_id: str):
     video = load_video(video_id)
-    config = copy.deepcopy(CONFIG)
+    config = routing.for_job(CONFIG, "analyze", video)
     async def worker(emit):
         video = await analyze(load_video(video_id), config, emit)
         return {"video": video}
@@ -509,7 +521,7 @@ def relevant_times(video, question):
 @app.post("/api/videos/{video_id}/chat")
 async def chat_endpoint(video_id: str, body: ChatRequest):
     video = load_video(video_id)
-    config = copy.deepcopy(CONFIG)
+    config = routing.for_job(CONFIG, "chat", video)
     async def worker(emit):
         video = load_video(video_id)
         if not video.get("analysis"):
@@ -594,7 +606,7 @@ async def plan_endpoint(video_id: str, body: EditRequest):
             media.edit_range(body.start, body.end, video["duration"], minimum, maximum)
         except media.MediaError as exc:
             raise HTTPException(400, str(exc)) from exc
-    config = copy.deepcopy(CONFIG)
+    config = routing.for_job(CONFIG, "plan", video)
     async def worker(emit):
         video = load_video(video_id)
         if not video.get("analysis"):
@@ -689,7 +701,7 @@ async def generate_endpoint(video_id: str, edit_id: str):
             await emit("output", "local", "Saved result", "Reopened the completed edit without new API calls.", "completed")
             return {"edit": edit, "reused": True}
         return start_job("generate", existing, video_id, workflows.build_workflow("generate", CONFIG, video=load_video(video_id), edit=edit))
-    config = copy.deepcopy(CONFIG)
+    config = routing.for_job(CONFIG, "generate", load_video(video_id), edit)
     if not edit["demo"]:
         if edit.get("strategy") == "source_video":
             # A retry resumes its original provider instead of creating another paid job.

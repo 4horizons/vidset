@@ -74,6 +74,25 @@ Analysis, chat, planning, and generation use your own provider accounts and can 
 
 ## What happens under the hood
 
+### Model choices and Prelint
+
+The compact **Model choice** card shows the selected model and one reason. Expand **Model options** to see the alternatives, missing keys, and incompatible input types. Each job freezes its routing configuration so the display matches the model actually called. The versioned `model-routing.json` policy prefers a configured, compatible catalog model, then the first eligible route with a key. Custom model IDs must be added to `app/routing.py` and the policy before they can be selected by this router.
+
+Prelint reviews these product rules through the repository's `prelint.json`; it is not a model inference API. The badge stays **Prelint · pending** until a real Prelint GitHub check has completed successfully for the current commit and unchanged policy. With GitHub CLI authenticated, sync that evidence using:
+
+```bash
+.venv/bin/python scripts/sync_prelint_review.py
+```
+
+The receipt stays in ignored `.prelint/` and contains no credentials. Connect the Prelint GitHub App to **4horizons/vidset** for automatic pull-request review; installing an organization app may require its owner. To connect a teammate's Codex agent to Prelint's decision ledger, use the official OAuth MCP server:
+
+```bash
+codex mcp add prelint --url https://app.prelint.com/mcp
+# Complete the browser sign-in when prompted.
+```
+
+No Prelint API key is required. Agent MCP access and repository review access are separate connections. See [Prelint MCP setup](https://prelint.com/docs/mcp) and [review configuration](https://prelint.com/docs/configuration).
+
 ```mermaid
 flowchart TD
     A[Upload local clip] --> B[FFmpeg normalizes video and extracts timestamped frames]
@@ -174,7 +193,7 @@ Official integration references: [Gemini video understanding](https://ai.google.
 
 ## Recorded can walkthrough
 
-Open **Can walkthrough** in the app header for the completed LaCroix beach example. The self-contained HTML embeds both videos, boundary evidence, actual model provenance, and six recorded stages. It automatically plays the muted before/after videos on a synchronized loop and runs a guided, animated tour that scrolls through each stage and highlights its relevant evidence. Pause the tour or scroll to take over; reduced-motion preferences disable automatic motion until Play or Start tour is selected. It does not make new model calls. The live activity sidebar separately tracks real job events, actual provider/model names, elapsed time, failures, and cached steps.
+Open **Can walkthrough** in the app header for the completed LaCroix beach example. The self-contained HTML embeds both videos, boundary evidence, actual model provenance, and seven guided stages (six recorded stages plus one explicitly simulated Prelint policy check). It automatically plays the muted before/after videos on a synchronized loop and runs a guided, animated tour that scrolls through each stage and highlights its relevant evidence. Pause the tour or scroll to take over; reduced-motion preferences disable automatic motion until Play or Start tour is selected. It does not make new model calls. The live activity sidebar separately tracks real job events, actual provider/model names, elapsed time, failures, and cached steps.
 
 ## Video library
 

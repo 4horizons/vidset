@@ -1,12 +1,33 @@
 {
   "version": 1,
   "trigger_mode": "auto",
-  "ignore_patterns": ["reference/**", "app/static/can-walkthrough.html", "app/static/environment-examples/**", "preview.jpg"],
-  "context_files": ["docs/MODEL_ROUTING.md", "CONTRACT.md"],
-  "rules": [
-    {"name": "Generate videos only on explicit request", "description": "Opening, uploading, refreshing, scrolling or hovering may create image previews but must never submit video generation. Video submission requires the user clicking Generate video. Reuse saved paid request tickets on retries."},
-    {"name": "Truthful model routing", "description": "Select only models supported by the implemented adapter and available credentials. Show actual provider, model, candidate exclusions and concise reason. Prelint reviews and records routing policy; never fabricate a live Prelint routing API or claim review approval without a successful check for the matching policy revision."},
-    {"name": "Preserve originals and secrets", "description": "New uploads and edits must preserve existing originals, conversations and versions. Never commit or return API keys, .env, original uploads, private request tickets or server credentials."}
+  "ignore_patterns": [
+    "reference/**",
+    "app/static/can-walkthrough.html",
+    "app/static/environment-examples/**",
+    "preview.jpg"
   ],
-  "output": {"comments": true, "check_run": true}
+  "context_files": [
+    "docs/MODEL_ROUTING.md",
+    "CONTRACT.md",
+    "model-routing.json"
+  ],
+  "rules": [
+    {
+      "name": "Generate videos only on explicit request",
+      "description": "Opening, uploading, refreshing, scrolling or hovering may create image previews but must never submit video generation. Video submission requires the user clicking Generate video. Reuse saved paid request tickets on retries."
+    },
+    {
+      "name": "Truthful model routing",
+      "description": "Select only models supported by the implemented adapter and available credentials. Show actual provider, model, candidate exclusions and concise reason. Prelint reviews and records routing policy; never fabricate a live Prelint routing API or claim review approval without a successful check for the matching policy revision."
+    },
+    {
+      "name": "Preserve originals and secrets",
+      "description": "New uploads and edits must preserve existing originals, conversations and versions. Never commit or return API keys, .env, original uploads, private request tickets or server credentials."
+    }
+  ],
+  "output": {
+    "comments": true,
+    "check_run": true
+  }
 }
