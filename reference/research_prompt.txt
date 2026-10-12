@@ -1,0 +1,70 @@
+You are a content strategy expert. Analyze this {platform} video transcript and provide an extremely detailed breakdown.
+
+TRANSCRIPT:
+{content[:50000]}
+
+Provide your analysis in the following JSON format. Be thorough and specific - this analysis will be used to replicate the video's success:
+
+{
+  "summary": "2-3 sentence summary of what the video is about and its key message",
+  
+  "content_classification": {
+    "category": "educational|storytelling|authority|series",
+    "template_type": "One of: 1A-Common Mistake, 1B-Myths vs Facts, 1C-Step by Step Tutorial, 1D-Framework/Formula, 1E-Quick Tips, 1F-Dos and Donts, 2A-Introduction Video, 2B-About Me, 2C-Big Dream/Goal, 2D-Build in Public, 2E-Challenge Story, 3A-Fake Case Study, 3B-Client Transformation, 3C-Personal Transformation, 4A-Progress Series, 4B-Step by Step Series, 4C-Challenge Series",
+    "format": "Talking Head|Green Screen|B-Roll Voiceover|Screen Recording|Whiteboard|Tier List|Point and Compare|3 Levels|This or That|Mixed",
+    "value_type": "step-by-step|framework|comparison|ranking|transformation|story|tips|education"
+  },
+  
+  "hook_analysis": {
+    "type": "Problem|Curiosity Gap|Bold Claim|Question|Controversial|Promise|Story|Pain Point",
+    "description": "Detailed explanation of what the hook does and why it works",
+    "verbal_hook": "The exact first 1-2 sentences spoken (the verbal hook)",
+    "written_hook": "Any on-screen text shown in the first 2 seconds, or null if none",
+    "frameworks": [
+      "Reusable hook templates extracted, e.g. 'If you're not doing X, you're missing out on Y'",
+      "Another framework like 'Most people think X, but actually Y'"
+    ],
+    "justification": "Why this specific hook is effective"
+  },
+  
+  "structure_analysis": {
+    "type": "Problem Solver|Tutorial|Story Arc|Listicle|Q&A|Rant|Transformation|Framework Reveal",
+    "description": "How the content flows from start to finish",
+    "best_for": "What types of content/niches this structure works best for",
+    "sections": [
+      {"name": "Hook", "content": "What happens in this section", "timing": "0-3s"},
+      {"name": "Problem Setup", "content": "Description of this section", "timing": "3-15s"},
+      {"name": "Solution/Value", "content": "The main value delivery", "timing": "15-45s"},
+      {"name": "CTA", "content": "Call to action", "timing": "45-60s"}
+    ],
+    "justification": "Why this structure is effective for this content"
+  },
+  
+  "style_analysis": {
+    "tone": "Detailed description of the emotional tone",
+    "voice": "Description of the creator's voice/persona",
+    "word_choice": "Analysis of vocabulary patterns",
+    "pacing": "Description of delivery speed",
+    "editing_style": "Description of visual editing style"
+  },
+  
+  "cta_analysis": {
+    "pattern": "The CTA pattern used, e.g. 'Comment X for Y' or 'Follow for more'",
+    "placement": "Beginning|Middle|End|Multiple",
+    "examples": ["Exact CTA phrases from the video"]
+  },
+  
+  "title_variants": [
+    "First adapted title that could work for a similar video in a different niche",
+    "Second adapted title variant",
+    "Third adapted title variant"
+  ],
+  
+  "key_insights": [
+    "5 specific, actionable insights about what makes this content effective"
+  ]
+}
+
+IMPORTANT: You MUST use one of the category values specified (educational, storytelling, authority, series). 
+You MUST include name, content, and timing for each section in structure_analysis.
+Return ONLY valid JSON, no additional text or markdown.

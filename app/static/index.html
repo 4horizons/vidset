@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f6ef">
+  <title>Aurrra — Video Lab</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/workflow.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/></symbol>
+    <symbol id="icon-sliders" viewBox="0 0 24 24"><path d="M4 7h5m4 0h7M4 17h9m4 0h3"/><circle cx="11" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8V4Z"/></symbol>
+    <symbol id="icon-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4m10 0h4M3 16h4m10 0h4"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="icon-message" viewBox="0 0 24 24"><path d="M20 4H4v13h4v4l5-4h7V4Z"/></symbol>
+    <symbol id="icon-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M11 3H3v18h18v-8"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Aurrra Video Lab home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>aurrra<span class="brand-period">.</span></span><span class="brand-divider"></span><span class="brand-product">VIDEO LAB</span></a>
+    <div class="topbar-actions"><button id="library-button" class="button button-subtle" type="button" aria-haspopup="dialog"><svg class="icon small"><use href="#icon-film"></use></svg><span>Video library</span><span id="library-count" class="library-count">0</span></button><a class="button button-text walkthrough-link" href="/static/can-walkthrough.html" target="_blank" rel="noopener" aria-label="Open the can walkthrough in a new tab" title="Can walkthrough">Can walkthrough<svg class="icon small"><use href="#icon-external"></use></svg></a><span class="local-badge"><i></i> LOCAL WORKSPACE</span><button id="settings-button" class="button button-subtle"><svg class="icon"><use href="#icon-sliders"></use></svg><span>Models & keys</span></button></div>
+  </header>
+
+  <main class="shell">
+    <section class="workspace-intro" aria-label="Welcome">
+      <div><div class="eyebrow"><span class="tiny-star">✳</span> FROM UNDERSTANDING TO REIMAGINING</div><h1>A conversation with your video<span>.</span></h1><p>Find the moment. See the evidence. Make it your own.</p></div>
+      <div class="intro-note"><span class="note-line"></span><p>One scene.<br><strong>Multiple perspectives.</strong></p><span class="lab-number">LAB / 001</span></div>
+    </section>
+
+    <div class="studio">
+      <section class="footage-column" aria-labelledby="footage-heading">
+        <div class="panel footage-panel">
+          <div class="panel-heading"><div class="panel-title"><span class="section-number">01</span><h2 id="footage-heading">Your footage</h2></div><button id="new-upload" class="button button-text" aria-label="Upload another video"><svg class="icon small"><use href="#icon-plus"></use></svg> Add video</button></div>
+          <div class="library-return"><button id="browse-library" class="button button-text" type="button">Browse saved videos <span aria-hidden="true">↗</span></button><span>Adding a video keeps your previous work.</span></div><div id="asset-toolbar" class="asset-toolbar" hidden><svg class="icon small"><use href="#icon-film"></use></svg><label class="sr-only" for="asset-select">Choose video</label><select id="asset-select"></select><span id="video-meta" class="mono"></span></div>
+          <div id="drop-zone" class="video-stage">
+            <div id="empty-state" class="empty-state">
+              <div class="empty-graphic" aria-hidden="true"><div class="graphic-frame back"><span></span></div><div class="graphic-frame front"><svg class="icon"><use href="#icon-play"></use></svg></div><div class="graphic-spark">✳</div></div>
+              <span class="mini-label">EVERY FRAME HAS A STORY</span><h3>Start with a little footage.</h3><p>Drop a short video here and see<br>what a few good models can do.</p>
+              <button id="upload-button" class="button button-lime"><svg class="icon small"><use href="#icon-upload"></use></svg> Choose a video</button>
+              <span id="upload-limits" class="upload-limits">Up to 120 seconds · 128 MB</span>
+              <button id="demo-button" class="demo-link">Or explore the sample <span>↗</span></button><span class="demo-description">Scripted demo · no API keys needed</span>
+            </div>
+            <video id="source-video" controls playsinline preload="metadata" hidden aria-label="Original video"></video>
+            <span id="source-badge" class="source-badge" hidden>ORIGINAL</span>
+            <div id="drop-overlay" class="drop-overlay" hidden><svg class="icon"><use href="#icon-upload"></use></svg><strong>Drop your next scene</strong></div>
+            <div id="media-loading" class="media-loading" hidden><span class="spinner"></span><strong id="media-loading-text">Preparing your footage…</strong><span>Extracting frames locally</span></div>
+          </div>
+          <div class="timeline-area">
+            <div class="timeline-heading"><span class="mini-label">FRAME EXPLORER</span><div class="time-display mono"><span id="current-time">00:00</span><span class="time-slash"> / </span><span id="duration">00:00</span></div></div>
+            <div id="timeline" class="timeline" aria-label="Video frame timeline"><div class="timeline-placeholder"><i></i><i></i><i></i><i></i><i></i><i></i><span>Every detail, in view.</span></div></div>
+            <label class="sr-only" for="playhead">Seek video</label><input id="playhead" class="playhead" type="range" min="0" max="1" value="0" step="0.01" disabled>
+            <div class="timeline-footer"><span id="timeline-note">Evidence frames appear here after upload</span><span id="range-badge" class="range-badge" hidden></span></div>
+          </div>
+          <div class="analysis-bar"><span id="analysis-state"><span class="status-dot"></span>Ready when you are</span><button id="analyze-button" class="button button-outline button-small" disabled><svg class="icon small"><use href="#icon-spark"></use></svg> Analyze video</button></div>
+          <div id="analysis-summary" class="analysis-summary" hidden></div>
+        </div>
+        <section id="output-panel" class="panel output-panel" hidden aria-labelledby="output-heading"><div class="panel-heading"><div class="panel-title"><span class="result-icon"><svg class="icon small"><use href="#icon-check"></use></svg></span><h2 id="output-heading">Your new cut</h2></div><a id="download-output" class="button button-text" download="aurrra-edit.mp4"><svg class="icon small"><use href="#icon-download"></use></svg> Download</a></div><div class="output-version-bar"><label for="output-version">Saved versions</label><select id="output-version" aria-label="Choose a saved edit"></select></div><video id="output-video" controls playsinline preload="metadata" aria-label="Edited video result"></video><p id="output-description"></p><div id="output-evidence"></div><div id="output-notes"></div></section>
+        <div class="footage-footnote"><svg class="icon small"><use href="#icon-film"></use></svg><p>Your files stay in this local project. Configured AI providers receive video, frames, and prompts when you run a model.</p></div>
+      </section>
+
+      <div class="conversation-workspace">
+      <section class="panel conversation-panel" aria-labelledby="conversation-heading">
+        <div class="panel-heading"><div class="panel-title"><span class="section-number">02</span><h2 id="conversation-heading">The conversation</h2></div><span class="subtle-pill">YOU + AI</span></div>
+        <div class="conversation-modes" role="tablist" aria-label="Conversation mode"><button id="ask-tab" type="button" class="mode-tab active" role="tab" aria-selected="true" aria-controls="conversation-body"><svg class="icon small"><use href="#icon-message"></use></svg> Ask about it</button><button id="edit-tab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="conversation-body"><svg class="icon small"><use href="#icon-spark"></use></svg> Change a moment</button></div>
+        <div id="conversation-body" class="conversation-body" role="tabpanel" aria-labelledby="ask-tab">
+          <div id="chat-empty" class="chat-empty"><div class="assistant-mark" aria-hidden="true">a.</div><h3>Look a little closer.</h3><p>Ask what happens, find a specific action, or reimagine something in the scene.</p><div id="suggestions" class="suggestions"><button data-prompt="What changes between the beginning and the end?">What changes from start to finish?<span>↗</span></button><button data-prompt="Describe the key moments with timestamps.">Show me the key moments<span>↗</span></button><button data-prompt="When does the main action happen?">When does the main action happen?<span>↗</span></button></div><div class="evidence-note"><span class="small-line"></span>Answers with evidence, not guesswork.</div></div>
+          <div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>
+        </div>
+        <div id="edit-controls" class="edit-controls" hidden><div class="edit-strategy"><label for="edit-strategy">How should we edit?</label><select id="edit-strategy" aria-describedby="edit-strategy-help"><option value="source_video">Edit the source video · 4–30 sec</option><option value="anchors">Generate between anchors · 1–10 sec</option></select><p id="edit-strategy-help">Use the original clip to guide the subject’s motion. Review boundary evidence and keep the source audio.</p></div><div class="edit-control-heading"><span>Which moment?</span><span class="muted">Leave blank to let AI find it</span></div><div class="range-inputs"><label>Start <input id="range-start" type="number" min="0" step="0.1" placeholder="Auto"><span>sec</span></label><span class="range-arrow">→</span><label>End <input id="range-end" type="number" min="0" step="0.1" placeholder="Auto"><span>sec</span></label></div><p id="range-help">A source video edit can span 4–30 seconds.</p></div>
+        <form id="chat-form" class="composer"><label class="sr-only" for="message-input">Your question or edit instruction</label><textarea id="message-input" rows="3" maxlength="4000" placeholder="What would you like to know?" disabled></textarea><div class="composer-bottom"><span id="composer-hint">Upload a video to begin</span><button id="send-button" class="send-button" type="submit" aria-label="Send message" disabled><svg class="icon"><use href="#icon-arrow"></use></svg></button></div></form>
+        <div class="conversation-footer"><span id="conversation-provider">Your models. Your perspective.</span><span class="keyboard-hint">↵ send</span></div>
+      </section>
+
+      <aside class="panel activity-panel" aria-labelledby="activity-heading">
+        <div class="panel-heading"><div class="panel-title"><span class="section-number">03</span><h2 id="activity-heading">Under the hood</h2></div><span id="activity-indicator" class="activity-indicator"></span></div>
+        <p class="activity-intro">Follow the work, one observable step at a time.</p>
+        <div class="workflow-scroll">
+          <section id="workflow-view" class="workflow-view" aria-label="Current workflow">
+            <div class="workflow-eyebrow"><span id="activity-log-label" class="mini-label">YOUR WORKFLOW</span><span id="workflow-elapsed" class="mono"></span></div>
+            <div class="workflow-heading"><h3 id="workflow-title">A little clarity at every step.</h3><button id="workflow-replay" type="button" class="workflow-replay" hidden>Replay steps</button></div>
+            <div id="workflow-progress" class="workflow-progress" hidden><span id="workflow-count"></span><span id="workflow-summary"></span></div>
+            <p id="workflow-notice" class="workflow-notice" hidden></p>
+            <ol id="workflow-steps" class="workflow-steps" aria-live="polite" aria-relevant="additions text"></ol>
+            <div id="workflow-empty" class="workflow-empty"><div class="workflow-empty-mark" aria-hidden="true"><span></span><span></span><span></span></div><h4>Your next move, made visible.</h4><p>Upload a scene or ask a question. Each phase will appear here with the model, evidence, and actual result.</p></div>
+          </section>
+          <details id="raw-events-details" class="activity-disclosure"><summary><span>Raw event log</span><span id="activity-count" class="mono">00</span></summary><div id="activity-feed" class="activity-feed"><div id="activity-empty" class="activity-empty"><p>No events recorded for this scene yet.</p></div></div></details>
+          <details id="model-roster-details" class="activity-disclosure model-disclosure"><summary><span>Model assignments</span><span class="disclosure-hint">Configured roles</span></summary><div class="model-roster" id="model-roster"></div></details>
+        </div>
+        <div class="activity-footer"><span class="status-dot"></span><span id="activity-status">Waiting for your first scene</span></div>
+      </aside>
+    <section id="environment-gallery" class="environment-gallery" aria-labelledby="environment-title" hidden>
+      <div class="environment-heading"><div><span class="eyebrow">SAME SUBJECT. NEW SURROUNDINGS.</span><h2 id="environment-title">Try your video in…</h2><p id="environment-intro">Preview a still. Generate the video when you choose.</p></div><span class="environment-count">FOUR PLACES TO START ↘</span></div>
+      <div id="environment-cards" class="environment-cards"></div>
+      <p class="environment-footnote">Opening a real clip creates four still previews with OpenAI. Full videos use your original footage and start only with Generate video. Previews illustrate the setting; generated motion may differ.</p>
+    </section>
+      </div>
+    </div>
+    <footer class="workspace-footer"><span>AURRRA VIDEO LAB</span><span>Curiosity, frame by frame.</span><span>LOCAL PROTOTYPE <i></i></span></footer>
+  </main>
+
+  <dialog id="library-dialog" class="library-dialog" aria-labelledby="library-title">
+    <div class="dialog-heading"><div><span class="eyebrow">YOUR SCENES, ALL IN ONE PLACE</span><h2 id="library-title">Video library</h2></div><button id="close-library" type="button" class="icon-button" aria-label="Close video library"><svg class="icon"><use href="#icon-close"></use></svg></button></div>
+    <p class="library-intro">Every upload has its own workspace. Reopen a video with its analysis, conversation, and saved edits.</p>
+    <div class="library-tools"><label class="sr-only" for="library-search">Search saved videos</label><input id="library-search" type="search" placeholder="Find a video or a scene…" autocomplete="off"><button id="library-upload" type="button" class="button button-dark"><svg class="icon small"><use href="#icon-plus"></use></svg>Upload new video</button></div>
+    <p id="library-status" class="library-status" role="status"></p>
+    <div id="library-grid" class="library-grid"></div>
+    <div class="library-footer"><svg class="icon small"><use href="#icon-check"></use></svg><span>Originals, analysis, and generated edits are saved in this workspace. A new upload never replaces an existing video.</span></div>
+  </dialog>
+  <input id="file-input" type="file" accept="video/*,.mp4,.mov,.webm,.mkv,.avi,.m4v" hidden>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title"><form id="settings-form"><div class="dialog-heading"><div><span class="eyebrow">BUILD YOUR MODEL TEAM</span><h2 id="settings-title">Models & keys</h2></div><button id="close-settings" type="button" class="icon-button" aria-label="Close settings"><svg class="icon"><use href="#icon-close"></use></svg></button></div><p class="settings-intro">Connect the models that see, reason, and create. OpenAI can handle both vision and reasoning, with Higgsfield editing the source video. Keys are held in server memory for this session, never returned to the browser or saved to disk.</p><div class="settings-section"><h3>Provider connections</h3><div id="key-fields" class="key-fields"></div><p class="settings-note">For Higgsfield, enter your own API ID and secret together as <code>API_ID:API_SECRET</code>. Local credentials are separate from any connected Codex account.</p></div><div class="settings-section"><h3>Assign each role</h3><div class="fal-route-note"><p>One <code>FAL_KEY</code> can power video analysis, chat, and source editing through the fal.ai model gateway.</p><button id="use-fal-route" class="button button-outline button-small" type="button">Use fal for all three roles ↗</button></div><div class="model-fields"><label>Vision provider<select id="vision-provider" name="vision_provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="fal">fal.ai (model gateway)</option></select></label><label>Vision model<input id="vision-model" name="vision_model" required autocomplete="off" spellcheck="false"></label><label>Reasoning provider<select id="chat-provider" name="chat_provider"><option value="openai">OpenAI</option><option value="gemini">Google Gemini</option><option value="anthropic">Anthropic</option><option value="fal">fal.ai (model gateway)</option></select></label><label>Reasoning model<input id="chat-model" name="chat_model" required autocomplete="off" spellcheck="false"></label><label class="wide-field">Source video provider<select id="video-edit-provider" name="video_edit_provider"><option value="higgsfield">Higgsfield</option><option value="fal">fal.ai</option></select></label><label id="source-fal-model-field" class="wide-field" hidden>Source video editor · fal.ai<input id="fal-video-edit-model" name="fal_video_edit_model" value="bytedance/seedance-2.5/reference-to-video" required autocomplete="off" spellcheck="false"></label><label id="source-higgsfield-model-field" class="wide-field">Source video editor · Higgsfield<input id="video-edit-model" name="video_edit_model" value="bytedance/seedance-2.5/video-edit" required autocomplete="off" spellcheck="false"></label><label class="wide-field">Anchor image editor · OpenAI<input id="image-model" name="image_model" required autocomplete="off" spellcheck="false"></label><label class="wide-field">Between-anchor video generator · fal.ai<input id="video-model" name="video_model" required autocomplete="off" spellcheck="false"></label></div><p class="settings-note">Source editing sends the selected original clip and instruction to your selected source video provider. The fal.ai model gateway can route vision and reasoning to distinct models with one key. Anchor generation uses OpenAI image editing and a fal.ai model that supports first and last frames. Model IDs are editable; use endpoints supported by each provider.</p></div><p id="settings-error" class="form-error" role="alert" hidden></p><div class="dialog-footer"><span>Blank keys keep existing connections.</span><button id="save-settings" class="button button-dark" type="submit">Save connections<svg class="icon small"><use href="#icon-arrow"></use></svg></button></div></form></dialog>
+</body>
+</html>

@@ -1,0 +1,13 @@
+.venv/
+.env
+data/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+
+.env.*
+!.env.example
+.prelint/
+*.pem
+*.key
