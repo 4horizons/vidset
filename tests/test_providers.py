@@ -153,6 +153,45 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(p.ProviderError):
                 await p.plan_edit(self.config, "Yellow hydrant", {}, 20, 1, 15, self.emit)
 
+    async def test_short_source_moments_gain_context_without_moving_the_target(self):
+        for start, end, duration in [(3.7, 5.1, 5.125), (0, .5, 5.125), (7, 8, 20),
+                                     (4.9, 5.166666, 5.166666), (4.9, 5.15, 5.15)]:
+            with self.subTest(start=start, end=end, duration=duration):
+                self.events.clear()
+                with self.transport(lambda request: openai_response({"start":start, "end":end,
+                                    "rationale":"Person appears at the end.", "prompt":"Dress the specified person as Santa."})):
+                    result = await p.plan_edit(self.config, "Make the person Santa", {}, duration, None, None, self.emit, strategy="source_video")
+                self.assertTrue(result['context_added'])
+                self.assertEqual(result['target_range'], {'start':start, 'end':end})
+                self.assertGreaterEqual(result['end'] - result['start'], 4 - .00001)
+                self.assertGreaterEqual(result['start'], 0)
+                self.assertLessEqual(result['end'], duration + .000001)
+                self.assertLessEqual(result['start'], start)
+                self.assertGreaterEqual(result['end'] + 1/p.media.FPS, end)
+                p.media.edit_range(result['start'], result['end'], duration, 4, 30)
+                self.assertIn('Extra footage is context only', result['prompt'])
+                self.assertIn(f"{start-result['start']:.3f}–{end-result['start']:.3f}s WITHIN", result['prompt'])
+                self.assertTrue(any(event['stage']=='edit_context' for event in self.events))
+
+    async def test_source_padding_does_not_guess_missing_or_invalid_moments(self):
+        for interval in [{"needs_range":True}, {"start":3,"end":3}, {"start":5,"end":2},
+                         {"start":40,"end":42}, {"start":0,"end":31}, {"start":None,"end":2}]:
+            with self.subTest(interval=interval):
+                self.events.clear()
+                with self.transport(lambda request: openai_response({**interval, 'prompt':'Change the coat.'})):
+                    with self.assertRaises(p.ProviderError):
+                        await p.plan_edit(self.config, "Change coat", {}, 35, None, None, self.emit, strategy="source_video")
+                self.assertFalse(any(event['stage']=='edit_context' for event in self.events))
+
+    async def test_source_padding_never_overrides_an_explicit_range(self):
+        with self.transport(lambda request: openai_response({'start':3.7,'end':5.1,'prompt':'Santa outfit.'})):
+            result = await p.plan_edit(self.config, "Santa outfit", {}, 5.125, 1.125, 5.125, self.emit, strategy="source_video")
+        self.assertEqual((result['start'],result['end']), (1.125,5.125))
+        self.assertNotIn('context_added', result)
+        with self.transport(lambda request: self.fail('Invalid manual times must fail before a call')):
+            with self.assertRaises(p.ProviderError):
+                await p.plan_edit(self.config, "Santa outfit", {}, 5.125, 3.7, 5.1, self.emit, strategy="source_video")
+
     async def test_image_edit_sends_multipart_and_writes_verified_png(self):
         buffer = io.BytesIO()
         Image.new("RGB", (1024, 1024), "yellow").save(buffer, "PNG")

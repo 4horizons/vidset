@@ -61,6 +61,8 @@ Open `.env` in your editor, fill the key values, and restart `./run.sh`.
 4. Show **Under the hood** for model choices and progress. Compare the result with the original.
 5. Open **Video library** to return to another clip. The four environment cards create still previews; full videos start only when clicked.
 
+For a brief moment, leave the edit times on **Auto**. Source editing adds surrounding footage to meet its four-second minimum, shows the target moment separately, and asks the model to preserve the added context. Review the plan before generating. Explicit start/end times are kept as entered and must meet the selected mode's limits.
+
 ## Quick questions about your video
 
 After analysis, **Ask about this scene** suggests three questions based on the visible subjects and events. Tap one to ask it immediately in **Ask about it** and get an answer with evidence. These questions explore the original footage; edits remain in **Change a moment**.

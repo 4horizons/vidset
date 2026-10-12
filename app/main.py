@@ -680,10 +680,11 @@ async def plan_endpoint(video_id: str, body: EditRequest):
             await emit("plan", "local", "Scripted demo", "Prepared a deterministic preview plan. No model called.", "completed")
         else:
             plan = await providers.plan_edit(config, body.instruction, video["analysis"], video["duration"], body.start, body.end, emit, strategy=strategy)
-        start, end = media.edit_range(float(plan["start"]), float(plan["end"]), video["duration"], minimum, maximum)
         # A manually chosen range is authoritative over model output.
         if body.start is not None:
             start, end = media.edit_range(body.start, body.end, video["duration"], minimum, maximum)
+        else:
+            start, end = media.edit_range(float(plan["start"]), float(plan["end"]), video["duration"], minimum, maximum)
         await emit("anchors", "local", "FFmpeg", f"Extracting source boundary frames for {start:.2f}–{end:.2f}s.")
         first, last = await extract_frames(video, [start, end - 1 / media.FPS])
         anchors = {"start": {k: first[k] for k in ("timestamp", "url")}, "end": {k: last[k] for k in ("timestamp", "url")}}
@@ -696,6 +697,8 @@ async def plan_endpoint(video_id: str, body: EditRequest):
                 "preset_id": body.preset_id,
                 "status": "planned", "strategy": strategy, "rationale": str(plan.get("rationale", "")), "prompt": str(plan.get("prompt", body.instruction)),
                 "anchors": anchors, "demo": video["demo"]}
+        if plan.get("context_added"):
+            edit.update(context_added=True, target_range=plan["target_range"])
         write_json(folder / "edit.json", edit)
         await emit("anchors", "local", "FFmpeg", "Boundary frames ready. Review the plan, then generate the replacement.", "completed",
                    [{**anchor, "label": label} for label, anchor in anchors.items()])

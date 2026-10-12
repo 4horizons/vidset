@@ -26,6 +26,7 @@ from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
 
 import httpx
+from . import media
 from PIL import Image, ImageOps
 
 
@@ -336,6 +337,11 @@ async def plan_edit(config, instruction, analysis, duration, start, end, emit, s
         raise ProviderError(f"Choose an edit range between {minimum} and {maximum} seconds, within the clip.")
     prompt = f"Plan a local visual edit in a {duration:.3f}s video. Instruction: {instruction}\nGrounded video analysis: {json.dumps(analysis or {})}\nUser fixed start: {fixed_start}; fixed end: {fixed_end}. Respect non-null user times. Select a supported relevant continuous interval {minimum}-{maximum} seconds long. For an edit of the whole background, select the whole clip if it fits these limits. If relevant timing cannot be located from analysis and no user times are supplied, return {{\"needs_range\":true,\"rationale\":\"Ask user to select the range\"}}. Do not invent a relevant event.\nReturn JSON {{\"start\":number,\"end\":number,\"rationale\":\"Short visible decision summary based on evidence; disclose uncertain boundaries\",\"prompt\":\"Precise requested change and preservation constraints\"}}. The generator will receive separately edited first and last frames of this interval, NOT the source motion. Preserve subject identity, camera position, lighting and unrequested objects, continue plausible motion, avoid added text. Do not promise perfect matching or exact motion preservation."
     if strategy == "source_video":
+        prompt = prompt.replace(
+            f"Select a supported relevant continuous interval {minimum}-{maximum} seconds long.",
+            f"Locate the relevant continuous moment, at most {maximum} seconds long. "
+            f"If it lasts less than {minimum} seconds, return its actual boundaries: the app will add "
+            "surrounding context to meet the editor's minimum length. Do not stretch the action's timing.")
         prompt = prompt.split("The generator will receive")[0] + (
             "The editor receives the actual source video segment, with its camera motion and subject reveal. "
             "State what must stay (subject identity, label/text, geometry, timing, position, camera motion) and what changes. "
@@ -355,12 +361,35 @@ async def plan_edit(config, instruction, analysis, duration, start, end, emit, s
     if a is None or b is None:
         raise ProviderError("The model returned no valid edit interval. Set start and end times explicitly.")
     a, b = max(0.0, min(duration, a)), max(0.0, min(duration, b))
+    target = None
+    if strategy == "source_video" and fixed_start is None and fixed_end is None and 0 < b - a < minimum:
+        target = {"start": round(a, 6), "end": round(b, 6)}
+        # Keep the located action and add context inside the available footage.
+        # Align down so rounding at the final frame cannot make the clip too short.
+        padded_start = max(0.0, min((a + b - minimum) / 2, duration - minimum))
+        padded_start = math.floor(padded_start * media.FPS) / media.FPS
+        padded_end = min(duration, max(padded_start + minimum, b))
+        a, b = media.edit_range(padded_start, padded_end, duration, minimum, maximum)
     if not minimum - 0.00001 <= b - a <= maximum + 0.00001:
         raise ProviderError(f"The model selected an invalid interval. Set a {minimum}–{maximum} second range explicitly.")
     prompt_result = _text(data.get("prompt"), 4000)
     if not prompt_result:
         raise ProviderError("The model returned no edit prompt. Try planning the edit again.")
-    return {"start": round(a, 3), "end": round(b, 3), "rationale": _text(data.get("rationale"), 1800), "prompt": prompt_result}
+    result = {"start": round(a, 6), "end": round(b, 6), "rationale": _text(data.get("rationale"), 1800), "prompt": prompt_result}
+    if target:
+        note = (f"Added surrounding footage: target {target['start']:.2f}–{target['end']:.2f}s; "
+                f"editor input {a:.2f}–{b:.2f}s ({b-a:.2f}s).")
+        result.update(target_range=target, context_added=True)
+        result["rationale"] = (result["rationale"] + " " + note).strip()
+        result["prompt"] += (
+            f" Timing constraint: this source segment begins at {a:.3f}s in the original. "
+            f"The requested moment is {target['start']-a:.3f}–{target['end']-a:.3f}s WITHIN this supplied segment "
+            f"(original video {target['start']:.3f}–{target['end']:.3f}s). "
+            "Extra footage is context only. Apply the requested change to the specified subject during that moment, "
+            "keeping their original movement and timing. Preserve the surrounding context, other people and "
+            "unrequested objects; do not introduce the subject before they appear.")
+        await emit("edit_context", "local", "Clip timing", note + " The prompt preserves the added context.", "completed")
+    return result
 
 
 async def edit_image(config, source_path: Path, output_path: Path, instruction: str, emit, label: str) -> None:

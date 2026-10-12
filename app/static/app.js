@@ -787,6 +787,7 @@
     header.append(el("span", "", edit.status === "completed" ? sourceEdit ? "Source video edit complete" : "Replacement complete" : "Your edit blueprint"), el("span", "mono", `${time(edit.start, true)}–${time(edit.end, true)}`));
     card.append(header);
     card.append(el("p", "plan-method", sourceEdit ? "SOURCE VIDEO EDIT · Original clip + instruction" : "ANCHOR GENERATION · First frame + last frame"));
+    if (edit.context_added && edit.target_range) card.append(el("p", "plan-rationale", `Target moment ${time(edit.target_range.start, true)}–${time(edit.target_range.end, true)} · surrounding footage added for the editor`));
     const anchors = el("div", "plan-anchors");
     for (const position of ["start", "end"]) {
       const anchor = edit.anchors?.[position];

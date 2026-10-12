@@ -1,10 +1,39 @@
 import copy
+import json
 import time
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app import main, media
+
+
+@pytest.mark.skipif(not media.available(), reason="Requires ffmpeg")
+def test_short_source_moment_reaches_a_reviewable_plan(client, monkeypatch):
+    video_id = 'd' * 32
+    folder = main.DATA / video_id
+    folder.mkdir()
+    media.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=blue:s=96x160:r=24:d=5.125',
+               '-c:v', 'libx264', '-pix_fmt', 'yuv420p', str(folder / 'video.mp4')])
+    (folder / 'video.json').write_text(json.dumps({'id':video_id, 'duration':5.125, 'demo':False,
+        'analysis':{'summary':'A pedestrian crosses near the end.', 'events':[{'start':3.7,'end':5.1}]}}))
+    main.CONFIG['keys']['openai'] = 'test'
+    async def model(*args, **kwargs):
+        return {'start':3.7, 'end':5.1, 'prompt':'Dress the pedestrian as Santa.', 'rationale':'Pedestrian at the end.'}
+    monkeypatch.setattr(main.providers, '_call_json', model)
+    result = wait_job(client, client.post(f'/api/videos/{video_id}/edits/plan',
+        json={'strategy':'source_video', 'instruction':'Make the guy at the end Santa Claus'}))
+    assert result['status'] == 'completed', result
+    edit = result['result']['edit']
+    assert edit['status'] == 'planned' and edit['context_added']
+    assert edit['target_range'] == {'start':3.7, 'end':5.1}
+    assert edit['end'] - edit['start'] >= 4
+    assert 'Timing constraint:' in edit['prompt']
+    for frame in edit['anchors'].values():
+        assert client.get(frame['url']).status_code == 200
+    saved = client.get(f'/api/videos/{video_id}/edits').json()['edits'][0]
+    assert saved['target_range'] == edit['target_range']
+    assert 'output_url' not in saved  # Planning does not start a paid video generation.
 
 
 def wait_job(client, response):
