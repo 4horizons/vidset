@@ -5,7 +5,8 @@
     "reference/**",
     "app/static/can-walkthrough.html",
     "app/static/environment-examples/**",
-    "preview.jpg"
+    "preview.jpg",
+    "START-HERE.html"
   ],
   "context_files": [
     "docs/MODEL_ROUTING.md",
