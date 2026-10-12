@@ -1,6 +1,7 @@
 """Single-process, loopback-only API for Vidset."""
 import asyncio
 import copy
+import hashlib
 import json
 import math
 import os
@@ -21,7 +22,7 @@ from pydantic import BaseModel, Field
 from PIL import Image
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from . import demo, media, providers, source_editor, workflows, environments, routing
+from . import demo, media, providers, source_editor, workflows, environments, routing, narration, questions
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -486,6 +487,64 @@ async def analyze_endpoint(video_id: str):
     return start_job("analyze", worker, video_id, workflows.build_workflow("analyze", config, video=video))
 
 
+def saved_questions(video):
+    path = directory(video["id"]) / "questions.json"
+    saved = json.loads(path.read_text()) if path.exists() else {}
+    if saved.get("fingerprint") != questions.fingerprint(video):
+        return {"status": "missing", "questions": []}
+    if saved.get("status") == "generating" and JOBS.get(saved.get("job_id"), {}).get("status") not in ("queued", "running"):
+        saved.update(status="failed", error="Question suggestions were interrupted. Try again, or ask your own.")
+        write_json(path, saved)
+    return saved
+
+
+@app.get("/api/videos/{video_id}/questions")
+async def get_questions(video_id: str):
+    return saved_questions(load_video(video_id))
+
+
+@app.post("/api/videos/{video_id}/questions")
+async def suggest_questions(video_id: str):
+    video = load_video(video_id)
+    if not video.get("analysis"):
+        raise HTTPException(400, "Analyze this video first to suggest questions.")
+    saved = saved_questions(video)
+    if saved.get("status") == "generating":
+        return {"job_id": saved["job_id"]}
+    if saved.get("status") == "completed":
+        async def existing(emit):
+            await emit("suggest_questions", "local", "Saved questions", "Opened saved questions. No model call.", "completed")
+            return saved
+        return start_job("questions", existing, video_id, {"title": "Open saved questions", "steps": [
+            workflows._step("suggest_questions", "Open saved questions", model="Saved questions")]})
+    config = copy.deepcopy(CONFIG) if video.get("demo") else routing.apply(CONFIG, ["reasoning"])
+    provider, model = ("local", "Scripted demo") if video.get("demo") else providers._reasoning_selection(config)
+    workflow = {"title": "Find questions worth asking", "steps": [
+        workflows._step("suggest_questions", "Suggest questions from the analysis", provider, model)]}
+    if config.get("_routing"):
+        workflow["routing"] = config["_routing"]
+    saved = {"status": "generating", "questions": [], "fingerprint": questions.fingerprint(video)}
+    path = directory(video_id) / "questions.json"
+
+    async def worker(emit):
+        try:
+            result = await questions.suggest(config, video, emit)
+            saved.update(result, status="completed")
+            saved["run_events"] = copy.deepcopy(JOBS[saved["job_id"]]["events"])
+            saved["workflow"] = workflow
+            write_json(path, saved)
+            return saved
+        except BaseException as exc:
+            saved.update(status="failed", error=clean_error(exc))
+            write_json(path, saved)
+            raise
+
+    job = start_job("questions", worker, video_id, workflow)
+    saved["job_id"] = job["job_id"]
+    write_json(path, saved)
+    return job
+
+
 class ChatTurn(BaseModel):
     role: Literal["user", "assistant"]
     content: str = Field(max_length=8000)
@@ -800,11 +859,122 @@ async def generate_endpoint(video_id: str, edit_id: str):
     return created
 
 
+class NarrationScriptRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=8000)
+
+
+class NarrationRequest(BaseModel):
+    script: str = Field(min_length=1, max_length=2000)
+    voice: Literal["marin", "cedar", "coral", "alloy", "onyx", "nova"] = "marin"
+    style: Literal["natural", "warm", "energetic"] = "natural"
+    keep_original: bool = True
+
+
+def narration_source(video_id, edit_id):
+    edit = load_edit(video_id, edit_id)
+    source = edit_folder(video_id, edit_id) / "output.mp4"
+    if edit.get("status") != "completed" or not source.is_file():
+        raise HTTPException(400, "Generate an edited video before adding narration.")
+    return source
+
+
+@app.get("/api/videos/{video_id}/edits/{edit_id}/narrations")
+async def list_narrations(video_id: str, edit_id: str):
+    narration_source(video_id, edit_id)
+    items = []
+    for path in sorted((edit_folder(video_id, edit_id) / "narrations").glob("*/narration.json"),
+                       key=lambda p: p.stat().st_mtime, reverse=True):
+        saved = json.loads(path.read_text())
+        if saved["status"] == "generating" and JOBS.get(saved.get("job_id"), {}).get("status") not in ("queued", "running"):
+            saved.update(status="failed", error="Narration was interrupted. Retry the same script to reuse any saved voice.")
+            write_json(path, saved)
+        items.append(saved)
+    return {"narrations": items}
+
+
+@app.post("/api/videos/{video_id}/edits/{edit_id}/narration-script")
+async def narration_script_endpoint(video_id: str, edit_id: str, body: NarrationScriptRequest):
+    source = narration_source(video_id, edit_id)
+    if not body.text.strip():
+        raise HTTPException(400, "Add some script text first.")
+    duration = (await asyncio.to_thread(media.probe, source))["duration"]
+    config = routing.apply(CONFIG, ["reasoning"])
+    provider, model = providers._reasoning_selection(config)
+    workflow = {"title": "Fit the narration script", "routing": config["_routing"],
+                "steps": [workflows._step("narration_script", "Adapt the chat response", provider, model)]}
+
+    async def worker(emit):
+        return await narration.fit_script(config, body.text.strip(), duration, emit,
+                                          load_edit(video_id, edit_id).get("instruction", ""))
+    return start_job("narration_script", worker, video_id, workflow)
+
+
+@app.post("/api/videos/{video_id}/edits/{edit_id}/narrations")
+async def generate_narration_endpoint(video_id: str, edit_id: str, body: NarrationRequest):
+    source = narration_source(video_id, edit_id)
+    script = body.script.strip()
+    if not script:
+        raise HTTPException(400, "Add some narration text first.")
+    settings = {**body.model_dump(), "script": script, "model": narration.MODEL}
+    narration_id = hashlib.sha256(json.dumps(settings, sort_keys=True).encode()).hexdigest()[:32]
+    folder = edit_folder(video_id, edit_id) / "narrations" / narration_id
+    path = folder / "narration.json"
+    saved = json.loads(path.read_text()) if path.exists() else None
+    if saved and saved["status"] == "generating" and JOBS.get(saved.get("job_id"), {}).get("status") in ("queued", "running"):
+        return {"job_id": saved["job_id"]}
+    if saved and saved["status"] == "completed" and (folder / "output.mp4").is_file():
+        async def existing(emit):
+            await emit("narration_mix", "local", "Saved narration", "Reopening the saved narrated video. No model call.", "completed")
+            return {"narration": saved, "reused": True}
+        return start_job("narration", existing, video_id,
+                         {"title": "Open the saved narration", "steps": [workflows._step("narration_mix", "Open saved narration", model="Saved narration")]})
+    config = copy.deepcopy(CONFIG)
+    if not config["keys"].get("openai") and not (folder / "voice.wav").is_file():
+        raise HTTPException(400, "Add your OpenAI key in Models & keys to generate narration.")
+    folder.mkdir(parents=True, exist_ok=True)
+    saved = {"id": narration_id, "video_id": video_id, "edit_id": edit_id, **settings,
+             "provider": "openai", "status": "generating", "created_at": datetime.now(timezone.utc).isoformat()}
+    workflow = {"title": "Narrate the edited video", "steps": [
+        workflows._step("narration_speech", "Generate the AI voice", "openai", narration.MODEL),
+        workflows._step("narration_mix", "Sync voice with the edited video")],
+        "routing": {"review": routing.review_status(), "decisions": [{"role": "speech", "title": "Voice narration",
+            "chosen": {"label": narration.MODEL, "provider": "openai", "model": narration.MODEL},
+            "reason": "Text-to-speech · selected voice", "candidates": []}]}}
+
+    async def worker(emit):
+        try:
+            speech = folder / "voice.wav"
+            if speech.is_file():
+                await asyncio.to_thread(narration.audio_duration, speech)
+                await emit("narration_speech", "openai", narration.MODEL, "Reusing the saved AI voice; no new speech call.", "completed")
+            else:
+                await narration.generate_speech(config, script, body.voice, body.style, speech, emit)
+            await emit("narration_mix", "local", "FFmpeg", "Mixing the voice into a separate video. Longer narration holds the final frame.")
+            timing = await asyncio.to_thread(narration.assemble, source, speech, folder / "output.mp4", body.keep_original)
+            saved.update(timing, status="completed", output_url=asset_url(video_id, folder / "output.mp4"),
+                         audio_url=asset_url(video_id, speech))
+            await emit("narration_mix", "local", "FFmpeg", "Narrated video saved. Voice and picture play together.", "completed",
+                       [{"kind": "video", "url": saved["output_url"], "label": "Narrated video"}])
+            saved["run_events"] = copy.deepcopy(JOBS[saved["job_id"]]["events"])
+            saved["workflow"] = workflow
+            write_json(path, saved)
+            return {"narration": saved}
+        except BaseException as exc:
+            saved.update(status="failed", error=clean_error(exc))
+            write_json(path, saved)
+            raise
+
+    job = start_job("narration", worker, f"{video_id}:{edit_id}:narration", workflow)
+    saved["job_id"] = job["job_id"]
+    write_json(path, saved)
+    return job
+
+
 @app.get("/media/{video_id}/{asset_path:path}")
 async def get_media(video_id: str, asset_path: str):
     folder = directory(video_id).resolve()
     path = (folder / asset_path).resolve()
-    if not path.is_relative_to(folder) or path.suffix not in (".mp4", ".jpg", ".png") or not path.is_file():
+    if not path.is_relative_to(folder) or path.suffix not in (".mp4", ".jpg", ".png", ".wav") or not path.is_file():
         raise HTTPException(404, "Media not found.")
     return FileResponse(path)
 

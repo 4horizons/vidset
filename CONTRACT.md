@@ -35,3 +35,17 @@ Implement app/static/index.html, app.js, styles.css only. Branded Vidset / Video
 config = `{keys:{gemini,openai,anthropic,fal,higgsfield},models:{...above}}`; emit called `await emit(stage,provider,model,message,status='running',artifacts=None)` (elapsed backend automatic). Keys never log, SDK responses/errors sanitized. HTTPX REST; no SDK needed; PIL available. Gemini analyze uses inline whole video (backend supplies small proxy <=18MB), other providers labeled sampled frame only. Explicit no-key errors. JSON robust parse. Can use configurable model IDs. Verify official REST docs online. Agent write tests/providers tests if useful under tests/test_providers.py. Do not edit other files.
 
 `app/source_editor.py`: `edit_source_video(config,source_path,output_path,prompt,duration,emit)` submits one Seedance 2.5 source edit with durable idempotency. Emits actual upload/queue/generation events; does not edit images or invent progress.
+
+
+## Suggested analysis questions
+- `GET /api/videos/{video_id}/questions`: cached `status`, `questions`, provider/model, and saved workflow events. Read-only; never calls a model.
+- `POST /api/videos/{video_id}/questions`: requires saved analysis; returns a job with three questions for understanding the original footage. Uses the configured reasoning route. No edit plan or video is generated.
+- Completed suggestions are cached by analysis fingerprint. Concurrent requests reconnect to the same job; changed analysis invalidates the cache. Failed/interrupted suggestions require a retry. The illustrated demo uses known fixture questions without API calls.
+- The UI asks a selected question through the existing `/chat` endpoint and displays its evidence frames.
+
+## Voice narration
+- `POST /api/videos/{video_id}/edits/{edit_id}/narration-script`: `{text}` → async job returning `{script, provider, model}` using the configured reasoning route.
+- `POST /api/videos/{video_id}/edits/{edit_id}/narrations`: `{script, voice, style, keep_original}` → async job returning `{narration}`. Requires a completed edit. OpenAI speech (`gpt-4o-mini-tts`) followed by local FFmpeg assembly; the original remains unchanged.
+- `GET /api/videos/{video_id}/edits/{edit_id}/narrations`: saved versions and statuses. Identical script/voice/style/mix settings reuse a completed version or reconnect to an active job; saved WAVs are reused after local assembly failure.
+- Narrations contain `output_url`, `audio_url`, `duration`, `speech_duration`, `hold_seconds`, `run_events`, and `workflow`. WAV assets are same-origin, scoped to their video, and support range requests.
+- Narration is AI-generated. Script length is limited to 2,000 characters; voice duration is bounded at 180 seconds. Long voiceovers hold the final video frame, never trim spoken words. Original audio is optionally mixed at 12% volume.

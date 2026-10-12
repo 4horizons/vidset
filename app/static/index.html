@@ -7,6 +7,7 @@
   <title>Vidset — Video Lab</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/workflow.js" defer></script>
+  <script src="/static/narration.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
 <body>
@@ -64,7 +65,18 @@
           <div class="analysis-bar"><span id="analysis-state"><span class="status-dot"></span>Ready when you are</span><button id="analyze-button" class="button button-outline button-small" disabled><svg class="icon small"><use href="#icon-spark"></use></svg> Analyze video</button></div>
           <div id="analysis-summary" class="analysis-summary" hidden></div>
         </div>
-        <section id="output-panel" class="panel output-panel" hidden aria-labelledby="output-heading"><div class="panel-heading"><div class="panel-title"><span class="result-icon"><svg class="icon small"><use href="#icon-check"></use></svg></span><h2 id="output-heading">Your new cut</h2></div><a id="download-output" class="button button-text" download="vidset-edit.mp4"><svg class="icon small"><use href="#icon-download"></use></svg> Download</a></div><div class="output-version-bar"><label for="output-version">Saved versions</label><select id="output-version" aria-label="Choose a saved edit"></select></div><video id="output-video" controls playsinline preload="metadata" aria-label="Edited video result"></video><p id="output-description"></p><div id="output-evidence"></div><div id="output-notes"></div></section>
+        <section id="output-panel" class="panel output-panel" hidden aria-labelledby="output-heading"><div class="panel-heading"><div class="panel-title"><span class="result-icon"><svg class="icon small"><use href="#icon-check"></use></svg></span><h2 id="output-heading">Your new cut</h2></div><a id="download-output" class="button button-text" download="vidset-edit.mp4"><svg class="icon small"><use href="#icon-download"></use></svg> Download</a></div><div class="output-version-bar"><label for="output-version">Saved versions</label><select id="output-version" aria-label="Choose a saved edit"></select></div><video id="output-video" controls playsinline preload="metadata" aria-label="Edited video result"></video><p id="output-description"></p><details id="narration-panel" class="narration-panel"><summary>Voice narration <span>From your conversation</span></summary>
+<div class="narration-editor">
+<div class="narration-heading"><label for="narration-script">Your script</label><span id="narration-length"></span></div>
+<textarea id="narration-script" rows="5" maxlength="2000" placeholder="Use a chat reply as narration, or write your own…"></textarea>
+<div class="narration-tools"><button id="narration-fit" class="button button-outline button-small" type="button">Fit script to clip</button><span id="narration-timing"></span></div>
+<div class="narration-options"><label>Voice<select id="narration-voice"><option value="marin">Marin</option><option value="cedar">Cedar</option><option value="coral">Coral</option><option value="alloy">Alloy</option><option value="onyx">Onyx</option><option value="nova">Nova</option></select></label><label>Delivery<select id="narration-style"><option value="natural">Natural</option><option value="warm">Warm</option><option value="energetic">Energetic</option></select></label></div>
+<label class="narration-audio-option"><input type="checkbox" id="narration-keep-audio" checked> Keep original audio quietly</label>
+<button id="narration-generate" class="button button-lime" type="button">Generate narration</button>
+<p class="narration-disclosure">AI-generated voice · OpenAI. Only your script is sent. Longer narration holds the last frame.</p>
+<p id="narration-status" role="status"></p>
+<div id="narration-saved" hidden><label for="narration-version">Playback audio</label><select id="narration-version"><option value="">Original audio</option></select><div class="narration-playback"><button id="narration-play" class="button button-outline" type="button">Play narrated video</button><a id="narration-download" class="button button-text" download>Download video</a><a id="narration-audio-download" class="button button-text" download>Voice only</a></div></div>
+</div></details><div id="output-evidence"></div><div id="output-notes"></div></section>
         <div class="footage-footnote"><svg class="icon small"><use href="#icon-film"></use></svg><p>Your files stay in this local project. Configured AI providers receive video, frames, and prompts when you run a model.</p></div>
       </section>
 
@@ -72,6 +84,11 @@
       <section class="panel conversation-panel" aria-labelledby="conversation-heading">
         <div class="panel-heading"><div class="panel-title"><span class="section-number">02</span><h2 id="conversation-heading">The conversation</h2></div><span class="subtle-pill">YOU + AI</span></div>
         <div class="conversation-modes" role="tablist" aria-label="Conversation mode"><button id="ask-tab" type="button" class="mode-tab active" role="tab" aria-selected="true" aria-controls="conversation-body"><svg class="icon small"><use href="#icon-message"></use></svg> Ask about it</button><button id="edit-tab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="conversation-body"><svg class="icon small"><use href="#icon-spark"></use></svg> Change a moment</button></div>
+        <section id="quick-questions" class="quick-questions" aria-label="Suggested questions about this video" hidden>
+          <div class="quick-questions-heading"><span>Ask about this scene</span><span id="quick-questions-status" role="status"></span></div>
+          <div id="quick-questions-list" class="quick-questions-list"></div>
+          <button id="quick-questions-retry" type="button" class="quick-questions-retry" hidden>Try suggestions again</button>
+        </section>
         <div id="conversation-body" class="conversation-body" role="tabpanel" aria-labelledby="ask-tab">
           <div id="chat-empty" class="chat-empty"><div class="assistant-mark" aria-hidden="true">v.</div><h3>Look a little closer.</h3><p>Ask what happens, find a specific action, or reimagine something in the scene.</p><div id="suggestions" class="suggestions"><button data-prompt="What changes between the beginning and the end?">What changes from start to finish?<span>↗</span></button><button data-prompt="Describe the key moments with timestamps.">Show me the key moments<span>↗</span></button><button data-prompt="When does the main action happen?">When does the main action happen?<span>↗</span></button></div><div class="evidence-note"><span class="small-line"></span>Answers with evidence, not guesswork.</div></div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>

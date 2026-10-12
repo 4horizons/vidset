@@ -15,8 +15,10 @@
     conversations: new Map(), events: [], seenEvents: new Set(),
     selectionSequence: 0, toastTimer: null, dragDepth: 0,
     savedEdits: new Map(), sceneSaveTimer: null, storageNotice: false,
+    questions: new Map(), questionLoads: new Set(),
     environments: [], presetSelection: null, gallerySignature: "", galleryPolling: false, previews: new Map(), previewRequests: new Set(), routing: null, routingSignature: "",
   };
+  let narrationUI;
   const flow = { job: null, saved: false, view: null, open: new Map(), previous: new Map(), collapseTimers: new Map(), tick: null, signature: "" };
   const elements = {
     video: $("#source-video"), output: $("#output-video"), input: $("#message-input"),
@@ -138,6 +140,7 @@
     ["#upload-button", "#new-upload", "#demo-button", "#settings-button", "#library-upload"].forEach((id) => { $(id).disabled = state.busy; });
     document.querySelectorAll(".library-card").forEach((button) => { button.disabled = state.busy; });
     document.querySelectorAll(".environment-action").forEach((button) => { button.disabled = state.busy; });
+    document.querySelectorAll(".quick-question, #quick-questions-retry").forEach((button) => { button.disabled = state.busy; });
     ["#range-start", "#range-end"].forEach((id) => { $(id).disabled = state.busy; });
     $("#edit-strategy").disabled = state.busy || Boolean(state.video?.demo);
     document.querySelectorAll(".generate-button").forEach((button) => { button.disabled = state.busy || button.dataset.finished === "true"; });
@@ -152,6 +155,7 @@
     state.busy = value;
     if (!flow.job) $("#activity-status").textContent = value ? label || "Working on your scene" : "Ready for this scene";
     updateControls();
+    narrationUI?.updateControls();
     if (flow.job) updateWorkflow(flow.job, { saved: flow.saved });
   }
 
@@ -190,6 +194,7 @@
     }));
     $("#chat-empty h3").textContent = mode === "edit" ? "A small change. A new scene." : "Look a little closer.";
     $("#chat-empty > p").textContent = mode === "edit" ? "Describe one change. Review the source moment and boundary evidence before generating your edit." : "Ask what happens, find a specific action, or reimagine something in the scene.";
+    renderQuickQuestions();
     renderStrategy();
     updateControls();
   }
@@ -477,6 +482,8 @@
     const saved = storedScene(video.id);
     upsertVideo(video);
     state.video = video;
+    renderQuickQuestions();
+    if (changed) narrationUI?.reset();
     renderAssetSelect();
     $("#empty-state").hidden = true;
     elements.video.hidden = false;
@@ -558,6 +565,56 @@
     }
     saveCurrentScene();
     renderEnvironments();
+    await loadQuickQuestions();
+  }
+
+  function renderQuickQuestions() {
+    const video = state.video;
+    const saved = state.questions.get(video?.id);
+    $("#suggestions").hidden = state.mode === "ask" && Boolean(saved?.questions?.length);
+    $("#quick-questions").hidden = !video?.analysis;
+    $("#quick-questions-status").textContent = saved?.status === "generating" ? "Finding questions…" : saved?.status === "failed" ? "Ask your own, or retry" : saved?.status === "completed" ? "Tap to ask" : "From your analysis";
+    $("#quick-questions-retry").hidden = !["failed", "missing"].includes(saved?.status);
+    $("#quick-questions-retry").disabled = state.busy;
+    $("#quick-questions-retry").title = saved?.error || "";
+    $("#quick-questions-list").replaceChildren(...(saved?.questions || []).map((question) => {
+      const button = el("button", "quick-question", question);
+      button.type = "button";
+      button.disabled = state.busy;
+      button.append(el("span", "", "↗"));
+      button.addEventListener("click", () => {
+        if (state.busy || state.video?.id !== video.id) return;
+        setMode("ask");
+        elements.input.value = question;
+        submitMessage({ preventDefault() {} });
+      });
+      return button;
+    }));
+  }
+
+  async function loadQuickQuestions(retry = false) {
+    const video = state.video;
+    if (!video?.analysis || state.busy || state.questionLoads.has(video.id)) return;
+    state.questionLoads.add(video.id);
+    try {
+      let saved = await api(`/api/videos/${encodeURIComponent(video.id)}/questions`);
+      if (state.video?.id !== video.id || state.busy) return;
+      state.questions.set(video.id, saved);
+      renderQuickQuestions();
+      const available = video.demo || credentialProviders.some((provider) => isConfigured(provider) && !["higgsfield"].includes(provider));
+      if ((saved.status === "missing" && available) || saved.status === "generating" || retry) {
+        state.questions.set(video.id, {status: "generating", questions: []});
+        renderQuickQuestions();
+        saved = await runJob(`/api/videos/${encodeURIComponent(video.id)}/questions`, undefined, "Finding questions about this scene");
+        state.questions.set(video.id, saved);
+      }
+    } catch (error) {
+      state.questions.set(video.id, {status: "failed", questions: [], error: error.message});
+      toast(`Questions couldn't be suggested: ${error.message}`, true);
+    } finally {
+      state.questionLoads.delete(video.id);
+      if (state.video?.id === video.id) renderQuickQuestions();
+    }
   }
 
   function renderTimeline() {
@@ -706,6 +763,19 @@
       card.append(button);
     }
     if (message.limitations) card.append(el("p", "message-limitations", asText(message.limitations)));
+    if (!user && message.text && !message.error && !message.pending && !message.edit) {
+      const narrate = el("button", "use-range-button narration-reply", "Use as narration ↗");
+      narrate.type = "button";
+      narrate.addEventListener("click", () => {
+        if (state.busy) { toast("Wait for the current step to finish.", true); return; }
+        const edited = (state.savedEdits.get(state.video?.id) || []).filter(item => item.status === "completed" && item.output_url);
+        const selected = edited.find(item => item.id === $("#output-version").value) || edited[0];
+        if (!selected) { toast("Create an edited video first, then add this response as narration.", true); return; }
+        renderOutput(selected, false);
+        narrationUI.useReply(message.text);
+      });
+      card.append(narrate);
+    }
     if (message.edit) card.append(renderPlan(message.edit));
     return card;
   }
@@ -788,6 +858,7 @@
   }
 
   function renderOutput(edit, scroll = true) {
+    narrationUI?.selectEdit(state.video, edit);
     const url = safeMedia(edit.output_url);
     const versions = (state.savedEdits.get(state.video?.id) || []).filter((item) => item.output_url && item.status === "completed");
     if (!versions.some((item) => item.id === edit.id)) versions.unshift(edit);
@@ -1253,7 +1324,7 @@
       renderMessages();
       // Chat and edit planning can analyze an unindexed clip before answering.
       const fresh = await api(`/api/videos/${encodeURIComponent(videoId)}`).catch(() => null);
-      if (fresh && state.video?.id === videoId) { upsertVideo(fresh); state.video = fresh; renderAnalysis(); }
+      if (fresh && state.video?.id === videoId) { upsertVideo(fresh); state.video = fresh; renderAnalysis(); await loadQuickQuestions(); }
     } catch (error) {
       pending.pending = false;
       pending.error = true;
@@ -1461,5 +1532,8 @@
     await refreshEnvironments();
     setInterval(refreshEnvironments, 3000);
   }
+  $("#quick-questions-retry").addEventListener("click", () => loadQuickQuestions(true));
+  narrationUI = window.VidsetNarration.create({api, runJob, safeMedia, toast, getState: () => state,
+    sourceVideo: elements.video, outputVideo: elements.output});
   initialize();
 })();

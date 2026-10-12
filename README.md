@@ -45,7 +45,7 @@ Open `.env` in your editor, fill the key values, and restart `./run.sh`.
 
 | What you want to try | Key to add |
 | --- | --- |
-| Ask questions, plan edits, generate still previews | `OPENAI_API_KEY` |
+| Ask questions, plan edits, generate still previews and voice narration | `OPENAI_API_KEY` |
 | Generate full source-video edits with Higgsfield | `HIGGSFIELD_API_KEY` as `KEY_ID:KEY_SECRET` |
 | Use fal for source-video edits or Kling motion | `FAL_KEY` |
 
@@ -56,9 +56,26 @@ Open `.env` in your editor, fill the key values, and restart `./run.sh`.
 ## A simple live demonstration
 
 1. Upload a short MP4 or MOV. For source-video editing, use a clip of **4–30 seconds**.
-2. Ask **“What changes between the beginning and the end?”** Click a returned frame to jump to its timestamp.
+2. Tap one of the three scene-specific questions above **The conversation**, or type your own. Click a returned evidence frame to jump to its timestamp.
 3. Choose **Change a moment** and describe a background change. Review the plan, then click **Generate**.
 4. Show **Under the hood** for model choices and progress. Compare the result with the original.
 5. Open **Video library** to return to another clip. The four environment cards create still previews; full videos start only when clicked.
+
+## Quick questions about your video
+
+After analysis, **Ask about this scene** suggests three questions based on the visible subjects and events. Tap one to ask it immediately in **Ask about it** and get an answer with evidence. These questions explore the original footage; edits remain in **Change a moment**.
+
+The configured reasoning model makes one suggestion call per saved analysis, shown in **Under the hood**. Questions are cached with the video and survive reloads. Reanalyzing changed content refreshes them. If suggestions fail, type your own question or click retry.
+
+## Turn a chat reply into narration
+
+1. Open a completed edit, then click **Use as narration** under a chat answer. Add more replies to combine them.
+2. Edit **Your script**, or use **Fit script to clip** to shorten it with your configured chat model. Review references to the original setting before narrating an edited scene.
+3. Choose a voice and delivery, then click **Generate narration**. This uses your OpenAI key for `gpt-4o-mini-tts`; only the script is sent to the speech provider.
+4. Click **Play narrated video**. The voice is mixed into a separate MP4, so play, pause and seeking remain synchronized. Download the video or the voice alone.
+
+The original edit stays saved. Narration versions survive reloads and appear under **Playback audio**. Longer voice tracks hold the last frame; **Keep original audio quietly** blends the original at 12% volume. Reusing identical settings reopens the saved result; a failed local mix reuses any completed voice recording.
+
+These are AI-generated voices. Speech generation uses the [OpenAI speech API](https://developers.openai.com/api/docs/guides/text-to-speech). Script fitting and voice generation make paid calls only when clicked. The offline judge tour remains a saved presentation.
 
 Need more? See the [technical guide](docs/TECHNICAL_GUIDE.md), [model-routing rules](docs/MODEL_ROUTING.md), and [API contract](CONTRACT.md).
