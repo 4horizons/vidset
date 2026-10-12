@@ -1,4 +1,4 @@
-# Aurrra Video Lab
+# Vidset
 
 An isolated, local hackathon prototype: upload a short video, ask questions with timestamped evidence, then describe a visual change and generate a replacement for a selected interval. The activity panel shows which provider and model actually ran, what stage completed, and the frames used along the way.
 

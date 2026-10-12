@@ -1,4 +1,4 @@
-"""Single-process, loopback-only API for Aurrra Video Lab."""
+"""Single-process, loopback-only API for Vidset."""
 import asyncio
 import copy
 import json
@@ -75,7 +75,7 @@ async def lifespan(app):
         await asyncio.gather(*TASKS, return_exceptions=True)
 
 
-app = FastAPI(title="Aurrra Video Lab", lifespan=lifespan)
+app = FastAPI(title="Vidset", lifespan=lifespan)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]", "testserver"])
 
 

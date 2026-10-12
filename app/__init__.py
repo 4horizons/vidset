@@ -1,1 +1,1 @@
-"""Aurrra Video Lab: isolated local multimodal video prototype."""
+"""Vidset: isolated local multimodal video prototype."""

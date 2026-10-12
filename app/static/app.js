@@ -65,6 +65,7 @@
 
   // Media and edits live on the server; only this browser's conversation and
   // viewing preferences are cached here. Provider configuration is never stored.
+  // Retain the original storage keys so the Vidset rebrand preserves saved conversations.
   const sceneKey = (id) => `aurrra.video-lab.scene.v1.${id}`;
   const activeKey = "aurrra.video-lab.active.v1";
   function storedScene(id) {
@@ -109,7 +110,7 @@
     let response;
     try {
       response = await fetch(path, { method, headers: body instanceof FormData ? {} : body !== undefined ? { "Content-Type": "application/json" } : {}, body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body) });
-    } catch { throw new Error("The local server is unreachable. Make sure Aurrra Video Lab is still running."); }
+    } catch { throw new Error("The local server is unreachable. Make sure Vidset is still running."); }
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = payload.detail;
@@ -672,7 +673,7 @@
     const card = el("article", `message message-${message.role}${message.error ? " message-error" : ""}${message.pending ? " message-pending" : ""}`);
     const heading = el("div", "message-heading");
     const user = message.role === "user";
-    heading.append(el("span", "message-avatar", user ? "YOU" : "a."), el("strong", "", user ? "You" : message.error ? "Something needs attention" : "Aurrra"));
+    heading.append(el("span", "message-avatar", user ? "YOU" : "v."), el("strong", "", user ? "You" : message.error ? "Something needs attention" : "Vidset"));
     if (message.model) heading.append(el("span", "", `${names[message.provider] || message.provider || ""} · ${message.model}`));
     else if (message.edit?.demo) heading.append(el("span", "", "Scripted demo"));
     card.append(heading);
@@ -809,7 +810,7 @@
       elements.output.load();
     }
     $("#download-output").href = url;
-    $("#download-output").download = `aurrra-${edit.id}.mp4`;
+    $("#download-output").download = `vidset-${edit.id}.mp4`;
     $("#output-description").textContent = `${edit.demo ? "SCRIPTED DEMO · " : isSourceEdit(edit) ? "SOURCE VIDEO EDIT · " : "ANCHOR GENERATION · "}${time(edit.start, true)}–${time(edit.end, true)} replaced. ${edit.demo ? "This sample uses a deterministic graphics change, with no generative model calls." : "Original audio is preserved when present. Review the subject, movement, and boundaries for continuity."}`;
     const evidence = $("#output-evidence");
     evidence.replaceChildren();

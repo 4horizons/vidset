@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f6ef">
-  <title>Aurrra — Video Lab</title>
+  <title>Vidset — Video Lab</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/workflow.js" defer></script>
   <script src="/static/app.js" defer></script>
@@ -27,7 +27,7 @@
   </svg>
 
   <header class="topbar">
-    <a class="brand" href="/" aria-label="Aurrra Video Lab home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>aurrra<span class="brand-period">.</span></span><span class="brand-divider"></span><span class="brand-product">VIDEO LAB</span></a>
+    <a class="brand" href="/" aria-label="Vidset home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>vidset<span class="brand-period">.</span></span><span class="brand-divider"></span><span class="brand-product">VIDEO LAB</span></a>
     <div class="topbar-actions"><button id="library-button" class="button button-subtle" type="button" aria-haspopup="dialog"><svg class="icon small"><use href="#icon-film"></use></svg><span>Video library</span><span id="library-count" class="library-count">0</span></button><a class="button button-text walkthrough-link" href="/static/can-walkthrough.html" target="_blank" rel="noopener" aria-label="Open the offline judge demo in a new tab" title="Judge demo">Judge demo<svg class="icon small"><use href="#icon-external"></use></svg></a><span class="local-badge"><i></i> LOCAL WORKSPACE</span><button id="settings-button" class="button button-subtle"><svg class="icon"><use href="#icon-sliders"></use></svg><span>Models & keys</span></button></div>
   </header>
 
@@ -64,7 +64,7 @@
           <div class="analysis-bar"><span id="analysis-state"><span class="status-dot"></span>Ready when you are</span><button id="analyze-button" class="button button-outline button-small" disabled><svg class="icon small"><use href="#icon-spark"></use></svg> Analyze video</button></div>
           <div id="analysis-summary" class="analysis-summary" hidden></div>
         </div>
-        <section id="output-panel" class="panel output-panel" hidden aria-labelledby="output-heading"><div class="panel-heading"><div class="panel-title"><span class="result-icon"><svg class="icon small"><use href="#icon-check"></use></svg></span><h2 id="output-heading">Your new cut</h2></div><a id="download-output" class="button button-text" download="aurrra-edit.mp4"><svg class="icon small"><use href="#icon-download"></use></svg> Download</a></div><div class="output-version-bar"><label for="output-version">Saved versions</label><select id="output-version" aria-label="Choose a saved edit"></select></div><video id="output-video" controls playsinline preload="metadata" aria-label="Edited video result"></video><p id="output-description"></p><div id="output-evidence"></div><div id="output-notes"></div></section>
+        <section id="output-panel" class="panel output-panel" hidden aria-labelledby="output-heading"><div class="panel-heading"><div class="panel-title"><span class="result-icon"><svg class="icon small"><use href="#icon-check"></use></svg></span><h2 id="output-heading">Your new cut</h2></div><a id="download-output" class="button button-text" download="vidset-edit.mp4"><svg class="icon small"><use href="#icon-download"></use></svg> Download</a></div><div class="output-version-bar"><label for="output-version">Saved versions</label><select id="output-version" aria-label="Choose a saved edit"></select></div><video id="output-video" controls playsinline preload="metadata" aria-label="Edited video result"></video><p id="output-description"></p><div id="output-evidence"></div><div id="output-notes"></div></section>
         <div class="footage-footnote"><svg class="icon small"><use href="#icon-film"></use></svg><p>Your files stay in this local project. Configured AI providers receive video, frames, and prompts when you run a model.</p></div>
       </section>
 
@@ -73,7 +73,7 @@
         <div class="panel-heading"><div class="panel-title"><span class="section-number">02</span><h2 id="conversation-heading">The conversation</h2></div><span class="subtle-pill">YOU + AI</span></div>
         <div class="conversation-modes" role="tablist" aria-label="Conversation mode"><button id="ask-tab" type="button" class="mode-tab active" role="tab" aria-selected="true" aria-controls="conversation-body"><svg class="icon small"><use href="#icon-message"></use></svg> Ask about it</button><button id="edit-tab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="conversation-body"><svg class="icon small"><use href="#icon-spark"></use></svg> Change a moment</button></div>
         <div id="conversation-body" class="conversation-body" role="tabpanel" aria-labelledby="ask-tab">
-          <div id="chat-empty" class="chat-empty"><div class="assistant-mark" aria-hidden="true">a.</div><h3>Look a little closer.</h3><p>Ask what happens, find a specific action, or reimagine something in the scene.</p><div id="suggestions" class="suggestions"><button data-prompt="What changes between the beginning and the end?">What changes from start to finish?<span>↗</span></button><button data-prompt="Describe the key moments with timestamps.">Show me the key moments<span>↗</span></button><button data-prompt="When does the main action happen?">When does the main action happen?<span>↗</span></button></div><div class="evidence-note"><span class="small-line"></span>Answers with evidence, not guesswork.</div></div>
+          <div id="chat-empty" class="chat-empty"><div class="assistant-mark" aria-hidden="true">v.</div><h3>Look a little closer.</h3><p>Ask what happens, find a specific action, or reimagine something in the scene.</p><div id="suggestions" class="suggestions"><button data-prompt="What changes between the beginning and the end?">What changes from start to finish?<span>↗</span></button><button data-prompt="Describe the key moments with timestamps.">Show me the key moments<span>↗</span></button><button data-prompt="When does the main action happen?">When does the main action happen?<span>↗</span></button></div><div class="evidence-note"><span class="small-line"></span>Answers with evidence, not guesswork.</div></div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>
         </div>
         <div id="edit-controls" class="edit-controls" hidden><div class="edit-strategy"><label for="edit-strategy">How should we edit?</label><select id="edit-strategy" aria-describedby="edit-strategy-help"><option value="source_video">Edit the source video · 4–30 sec</option><option value="anchors">Generate between anchors · 1–10 sec</option></select><p id="edit-strategy-help">Use the original clip to guide the subject’s motion. Review boundary evidence and keep the source audio.</p></div><div class="edit-control-heading"><span>Which moment?</span><span class="muted">Leave blank to let AI find it</span></div><div class="range-inputs"><label>Start <input id="range-start" type="number" min="0" step="0.1" placeholder="Auto"><span>sec</span></label><span class="range-arrow">→</span><label>End <input id="range-end" type="number" min="0" step="0.1" placeholder="Auto"><span>sec</span></label></div><p id="range-help">A source video edit can span 4–30 seconds.</p></div>
@@ -109,7 +109,7 @@
     </section>
       </div>
     </div>
-    <footer class="workspace-footer"><span>AURRRA VIDEO LAB</span><span>Curiosity, frame by frame.</span><span>LOCAL PROTOTYPE <i></i></span></footer>
+    <footer class="workspace-footer"><span>VIDSET</span><span>Curiosity, frame by frame.</span><span>LOCAL PROTOTYPE <i></i></span></footer>
   </main>
 
   <dialog id="library-dialog" class="library-dialog" aria-labelledby="library-title">

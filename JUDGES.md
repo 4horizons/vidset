@@ -1,6 +1,6 @@
-# Judge demo — no setup
+# Vidset judge demo — no setup
 
-## [⬇ Download the demo (.zip)](https://github.com/4horizons/vidset/releases/download/judge-demo/VIDSET-DEMO.zip?v=00f06b6)
+## [⬇ Download the demo (.zip)](https://github.com/4horizons/vidset/releases/download/judge-demo/VIDSET-DEMO.zip?v=vidset-brand)
 
 1. Download and unzip.
 2. Double-click **START-HERE.html**. If it opens as text, right-click → **Open with → Safari / Chrome / Edge**.

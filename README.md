@@ -1,4 +1,4 @@
-# Aurrra Video Lab · Vidset
+# Vidset
 
 **Chat with a video. Find the moment. Change the scene.**
 
@@ -6,7 +6,7 @@ Upload a short clip, get answers with timestamps and evidence frames, then descr
 
 ## Judges: start here — no setup
 
-### [⬇ Download the judge demo (.zip)](https://github.com/4horizons/vidset/releases/download/judge-demo/VIDSET-DEMO.zip?v=00f06b6)
+### [⬇ Download the judge demo (.zip)](https://github.com/4horizons/vidset/releases/download/judge-demo/VIDSET-DEMO.zip?v=vidset-brand)
 
 1. **Download** the ZIP above and **unzip** it.
 2. **Double-click `START-HERE.html`** to open the demo in your browser. If your computer opens an editor, right-click → **Open with → Safari, Chrome, or Edge**.
