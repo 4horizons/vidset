@@ -31,27 +31,45 @@ cd vidset
 
 Open **http://127.0.0.1:8765**. The launcher installs the Python dependencies automatically. Stop it with **Ctrl+C**.
 
-## Add keys — live app only
+## Developer handoff: add your own keys
 
-The fastest option is **Models & keys** in the app. Paste your keys and save. They stay in server memory until restart.
+**No team credentials are included.** You do not need to change application code. Keys are loaded by the Python server from the `.env` file beside this README.
 
-For settings that survive a restart:
+1. **Create your own provider keys.** Use **OpenAI + Higgsfield** for the complete flow. The requests use your accounts and billing.
+2. **Create the local settings file** in the repository folder (on a fresh clone):
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   chmod 600 .env
+   ```
 
-Open `.env` in your editor, fill the key values, and restart `./run.sh`.
+   If `.env` already exists, edit it instead of copying over it.
 
-| What you want to try | Key to add |
+3. **Open `.env` in your editor** and fill these two values. Keep the model settings from the template:
+
+   ```dotenv
+   OPENAI_API_KEY=YOUR_OPENAI_API_KEY
+   HIGGSFIELD_API_KEY=YOUR_KEY_ID:YOUR_KEY_SECRET
+   ```
+
+   Higgsfield requires an **API key ID and API secret joined by a colon**. Its website login or connected ChatGPT account is not an API key. Leave unused providers blank.
+
+4. **Start the app:** `./run.sh`. If it is already running, stop it with **Ctrl+C** first. Open **http://127.0.0.1:8765**.
+5. **Check Models & keys.** OpenAI and Higgsfield should show as configured. Try the illustrated sample first; it makes no model calls. Upload a real short clip when ready—analysis and four still previews can start automatically and incur provider charges. Full video generation and narration start when clicked.
+
+| Environment variable | What it enables |
 | --- | --- |
-| Ask questions, plan edits, generate still previews and voice narration | `OPENAI_API_KEY` |
-| Generate full source-video edits with Higgsfield | `HIGGSFIELD_API_KEY` as `KEY_ID:KEY_SECRET` |
-| Use fal for source-video edits or Kling motion | `FAL_KEY` |
+| `OPENAI_API_KEY` | Video questions, suggested questions, edit planning, still previews, and voice narration |
+| `HIGGSFIELD_API_KEY` | Full source-video editing; format `KEY_ID:KEY_SECRET` |
+| `FAL_KEY` | Optional video editing through fal, or Kling between edited anchor frames |
+| `GEMINI_API_KEY` | Optional Gemini analysis and reasoning |
+| `ANTHROPIC_API_KEY` | Optional Anthropic analysis and reasoning |
 
-**OpenAI + Higgsfield is the simplest complete setup.** The app selects routes with available keys. Gemini and Anthropic are optional alternatives. A fal key works for fal-hosted routes; OpenAI still previews use a separate OpenAI key.
+**Using fal instead of Higgsfield?** Add `FAL_KEY` and set `VIDEO_EDIT_PROVIDER=fal` in `.env`. Keep OpenAI for still previews and narration. Gemini and Anthropic can be selected in **Models & keys**; their keys are separate from OpenAI and fal keys.
 
-`.env.example` contains blank placeholders. Keep your filled `.env` on your machine; it is ignored by Git and is unnecessary for the judge demo. Live provider requests can incur charges.
+**Replacing or removing keys:** stop the server, replace or blank the values in `.env`, and restart. Keys pasted into **Models & keys** last only until the server stops; leaving a UI field blank does not clear an existing key. Exported shell environment variables override `.env`, so unset old provider variables in the launching terminal if the app still finds an old key. Stop any separate shared server/tunnel too when taking an instance offline. Removing a local key does not revoke it—revoke an unused key in its provider account when you no longer need it elsewhere.
+
+Keep `.env` private: it is ignored by Git, is never required for the offline judge demo, and must not be added to frontend files or shared downloads. Only `.env.example`, with blank credentials, belongs in the repository. Saved videos and edits remain in `data/` when keys are changed.
 
 ## A simple live demonstration
 
