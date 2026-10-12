@@ -193,7 +193,7 @@ Official integration references: [Gemini video understanding](https://ai.google.
 
 ## Recorded can walkthrough
 
-Open **Judge demo** in the app header for the completed LaCroix beach example. The self-contained HTML embeds both videos, boundary evidence, actual model provenance, and seven guided stages (six recorded stages plus one explicitly simulated Prelint policy check). It automatically plays the muted before/after videos on a synchronized loop and runs a guided, animated tour that scrolls through each stage and highlights its relevant evidence. Pause the tour or scroll to take over; reduced-motion preferences disable automatic motion until Play or Start tour is selected. It does not make new model calls. The live activity sidebar separately tracks real job events, actual provider/model names, elapsed time, failures, and cached steps.
+Open **Judge demo** in the app header for the completed LaCroix beach example. The self-contained HTML embeds both videos, boundary evidence, actual model provenance, and seven guided stages (the recorded beach workflow plus a real model-routing snapshot captured afterward). It automatically plays the muted before/after videos on a synchronized loop and runs a guided, animated tour that scrolls through each stage and highlights its relevant evidence. Pause the tour or scroll to take over; reduced-motion preferences disable automatic motion until Play or Start tour is selected. It does not make new model calls. The live activity sidebar separately tracks real job events, actual provider/model names, elapsed time, failures, and cached steps.
 
 ## Video library
 

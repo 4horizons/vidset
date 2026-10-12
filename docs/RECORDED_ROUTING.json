@@ -1,0 +1,98 @@
+{
+  "captured_at": "2026-10-12T00:55:29.988848+00:00",
+  "source": "Local app /api/routing",
+  "decision": {
+    "role": "source_video",
+    "title": "Video edit",
+    "chosen": {
+      "id": "higgsfield-seedance",
+      "provider": "higgsfield",
+      "model": "bytedance/seedance-2.5/video-edit",
+      "label": "Seedance \u00b7 Higgsfield",
+      "roles": [
+        "source_video"
+      ]
+    },
+    "reason": "Accepts source video and camera motion \u00b7 preferred",
+    "candidates": [
+      {
+        "id": "openai-vision",
+        "label": "GPT-4.1 mini",
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "status": "incompatible",
+        "reason": "Different input type"
+      },
+      {
+        "id": "gemini",
+        "label": "Gemini Flash",
+        "provider": "gemini",
+        "model": "gemini-2.5-flash",
+        "status": "incompatible",
+        "reason": "Different input type"
+      },
+      {
+        "id": "fal-gemini",
+        "label": "Gemini via fal",
+        "provider": "fal",
+        "model": "google/gemini-2.5-flash",
+        "status": "incompatible",
+        "reason": "Different input type"
+      },
+      {
+        "id": "claude",
+        "label": "Claude Sonnet",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "status": "incompatible",
+        "reason": "Different input type"
+      },
+      {
+        "id": "fal-openai",
+        "label": "GPT-4.1 via fal",
+        "provider": "fal",
+        "model": "openai/gpt-4.1-mini",
+        "status": "incompatible",
+        "reason": "Different input type"
+      },
+      {
+        "id": "gpt-image",
+        "label": "GPT Image 1.5",
+        "provider": "openai",
+        "model": "gpt-image-1.5",
+        "status": "incompatible",
+        "reason": "Different input type"
+      },
+      {
+        "id": "higgsfield-seedance",
+        "label": "Seedance \u00b7 Higgsfield",
+        "provider": "higgsfield",
+        "model": "bytedance/seedance-2.5/video-edit",
+        "status": "selected",
+        "reason": "Selected"
+      },
+      {
+        "id": "fal-seedance",
+        "label": "Seedance \u00b7 fal",
+        "provider": "fal",
+        "model": "bytedance/seedance-2.5/reference-to-video",
+        "status": "available",
+        "reason": "Alternative route"
+      },
+      {
+        "id": "fal-kling",
+        "label": "Kling O1",
+        "provider": "fal",
+        "model": "fal-ai/kling-video/o1/image-to-video",
+        "status": "incompatible",
+        "reason": "Different input type"
+      }
+    ]
+  },
+  "review": {
+    "state": "pending",
+    "label": "Prelint \u00b7 pending",
+    "url": "https://github.com/4horizons/vidset/pull/1",
+    "source": "local_policy"
+  }
+}

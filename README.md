@@ -13,7 +13,7 @@ Upload a short clip, get answers with timestamps and evidence frames, then descr
 
 **That one file is the whole demo.** It includes both videos, the beach edit, evidence images, a saved OpenAI Q&A, and model explanations. It works offline with **no login, installation, API keys, server, or model calls**. You can share the file directly; recipients do not need GitHub access to open their copy.
 
-The beach edit and Q&A are real saved results. The Prelint walkthrough step is explicitly **simulated**; it was added after that beach generation. Prelint reviews model-routing policy; the live app applies it locally. A successful review is shown only when verified.
+The beach edit and Q&A are real saved results. The model-choice step replays a real selection captured from the app after the beach edit. Prelint reviews model-routing policy; the live app applies it locally. A successful review is shown only when verified.
 
 **We will demonstrate new uploads, live Q&A, and generation in the live app.** The HTML is a recorded presentation, not a place to submit new video edits.
 
